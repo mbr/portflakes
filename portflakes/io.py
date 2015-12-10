@@ -11,7 +11,7 @@ class BackgroundIO(GObject.GObject):
 
     def start_thread(self):
         self._thread = threading.Thread(target=self._run_thread)
-        self._thread.daemonize = True
+        self._thread.daemon = True
         self._thread.start()
 
     def _run_thread(self):
