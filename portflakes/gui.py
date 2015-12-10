@@ -19,7 +19,8 @@ class TermGUI(Gtk.Window):
 
         # connect to io
         if io:
-            io.connect('data-received', lambda _, d: top.append_data(d))
+            io.connect('data-received', lambda _, d: top.append_incoming(d))
+            io.connect('data-sent', lambda _, d: top.append_outgoing(d))
 
 
 class DataView(Gtk.TextView):
@@ -34,7 +35,11 @@ class DataView(Gtk.TextView):
     def _style(self):
         self.modify_font(Pango.FontDescription('Monospace'))
 
-    def append_data(self, data):
+    def append_incoming(self, data):
+        tb = self.get_buffer()
+        tb.insert(tb.get_end_iter(), repr(data))
+
+    def append_outgoing(self, data):
         tb = self.get_buffer()
         tb.insert(tb.get_end_iter(), repr(data))
 
@@ -54,7 +59,7 @@ class ASCIIView(DataView):
             0x0d: (r'\r', self.tag_nl),
         }
 
-    def append_data(self, data):
+    def append_incoming(self, data):
         tb = self.get_buffer()
         pos = tb.get_end_iter()
 
@@ -74,7 +79,7 @@ class ASCIIView(DataView):
 
 
 class HexView(DataView):
-    def append_data(self, data):
+    def append_incoming(self, data):
         tb = self.get_buffer()
         pos = tb.get_end_iter()
 
@@ -92,6 +97,6 @@ class MultiFormatViewer(Gtk.Notebook):
         self.append_page(self.view_ascii, Gtk.Label('ASCII'))
         self.append_page(self.view_hex, Gtk.Label('Hex'))
 
-    def append_data(self, data):
-        self.view_ascii.append_data(data)
-        self.view_hex.append_data(data)
+    def append_incoming(self, data):
+        self.view_ascii.append_incoming(data)
+        self.view_hex.append_incoming(data)

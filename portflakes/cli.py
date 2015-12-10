@@ -10,6 +10,6 @@ def cli():
     io_thread = RandomDataGenerator()
     mw = TermGUI(io=io_thread)
 
-    io_thread.start_thread()
+    io_thread.start_daemon()
     mw.show_all()
     Gtk.main()
