@@ -71,6 +71,36 @@ class EightBitEntry(Gtk.Entry):
         self.set_text('')
 
 
+class EightBitInput(Gtk.HBox):
+    __gsignals__ = {'bytes-entered': (GObject.SIGNAL_RUN_FIRST, None,
+                                      (object, )), }
+
+    def __init__(self, *args, **kwargs):
+        super(EightBitInput, self).__init__(*args, **kwargs)
+
+        self.entry = EightBitEntry()
+        self.combo = Gtk.ComboBoxText()
+        self.combo.append_text('')
+        self.combo.append_text(r'\r\n')
+        self.combo.append_text(r'\n')
+        self.combo.append_text(r'\r')
+
+        self.combo.set_active(1)
+
+        self.pack_start(self.entry, True, True, 0)
+        self.pack_start(self.combo, False, True, 0)
+
+        self.entry.connect('bytes-entered', self._on_entered)
+
+    def _on_entered(self, _, data):
+        suffix = self.combo.get_active_text()
+
+        if suffix:
+            data = data + parse_8bit(suffix)
+
+        self.emit('bytes-entered', data)
+
+
 class DataEntry(Gtk.Notebook):
     __gsignals__ = {'data-entered': (GObject.SIGNAL_RUN_FIRST, None,
                                      (object, )), }
@@ -79,11 +109,11 @@ class DataEntry(Gtk.Notebook):
 
         super(DataEntry, self).__init__(*args, **kwargs)
 
-        entry = EightBitEntry()
-        self.append_page(entry, Gtk.Label('Direct entry'))
+        eight_bit = EightBitInput()
+        self.append_page(eight_bit, Gtk.Label('Direct Entry'))
 
-        entry.connect('bytes-entered',
-                      lambda _, d: self.emit('data-entered', d))
+        eight_bit.connect('bytes-entered',
+                          lambda _, d: self.emit('data-entered', d))
 
 
 class DataView(Gtk.TextView):
