@@ -50,6 +50,13 @@ class EightBitEntry(Gtk.Entry):
             dlg.run()
             dlg.destroy()
             return
+        except Exception as e:
+            dlg = Gtk.MessageDialog(self.get_toplevel(), Gtk.DialogFlags.MODAL,
+                                    Gtk.MessageType.ERROR, Gtk.ButtonsType.OK,
+                                    str(e))
+            dlg.run()
+            dlg.destroy()
+            return
 
         # we got valid, sendable raw input! hooray
         self.emit('bytes-entered', raw)
