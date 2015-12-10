@@ -36,6 +36,12 @@ class BackgroundIO(GObject.GObject):
     def _run_send_thread(self):
         raise NotImplementedError()
 
+    @classmethod
+    def new_and_start(cls, *args, **kwargs):
+        instance = cls(*args, **kwargs)
+        instance.start_daemon()
+        return instance
+
 
 class RandomDataGenerator(BackgroundIO):
     def _run_send_thread(self):

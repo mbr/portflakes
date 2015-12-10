@@ -1,15 +1,19 @@
 import click
-from gi.repository import Gtk
 
-from .io import Echo
-from .gui import TermGUI
+from .io import Echo, RandomDataGenerator
+from .gui import run_gui
 
 
-@click.command('portflakes')
+@click.group()
 def cli():
-    io_thread = Echo()
-    mw = TermGUI(io=io_thread)
+    pass
 
-    io_thread.start_daemon()
-    mw.show_all()
-    Gtk.main()
+
+@cli.command()
+def echo():
+    run_gui(Echo.new_and_start())
+
+
+@cli.command()
+def random():
+    run_gui(RandomDataGenerator.new_and_start())

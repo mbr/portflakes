@@ -3,6 +3,12 @@ from gi.repository import Gtk, Pango, GObject
 from .util import parse_8bit
 
 
+def run_gui(io):
+    mw = TermGUI(io=io)
+    mw.show_all()
+    Gtk.main()
+
+
 class TermGUI(Gtk.Window):
     def __init__(self, io=None, *args, **kwargs):
         super(TermGUI, self).__init__(*args, **kwargs)
