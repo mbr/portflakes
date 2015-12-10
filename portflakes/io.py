@@ -89,5 +89,4 @@ class SerialIO(BackgroundIO):
     def _run_receive_thread(self):
         while True:
             data = self.ser.read()
-            print('READ', data)
             GLib.idle_add(self.emit, 'data-received', data)
