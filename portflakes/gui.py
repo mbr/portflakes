@@ -76,11 +76,23 @@ class ASCIIView(DataView):
             fmt = self.map.get(c, None)
 
             if fmt:
-                print(fmt)
                 tb.insert_with_tags(pos, *fmt)
                 continue
 
             tb.insert_with_tags(pos, r'\x{:x}'.format(c), self.tag_non_ascii)
+
+
+class HexView(DataView):
+    def _update(self):
+        tb = self.get_buffer()
+
+        # empty
+        tb.delete(tb.get_start_iter(), tb.get_end_iter())
+
+        pos = tb.get_start_iter()
+
+        for c in self._data:
+            tb.insert(pos, '{:02x} '.format(c))
 
 
 class MultiFormatViewer(Gtk.Notebook):
@@ -88,7 +100,7 @@ class MultiFormatViewer(Gtk.Notebook):
         super(MultiFormatViewer, self).__init__(*args, **kwargs)
 
         self.view_ascii = ASCIIView()
-        self.view_hex = DataView()
+        self.view_hex = HexView()
 
         self.append_page(self.view_ascii, Gtk.Label('ASCII'))
         self.append_page(self.view_hex, Gtk.Label('Hex'))
