@@ -5,6 +5,8 @@ class TermGUI(Gtk.Window):
     def __init__(self, io=None, *args, **kwargs):
         super(TermGUI, self).__init__(*args, **kwargs)
 
+        self.set_name('portflakes')
+
         # build gui
         self.mbox = Gtk.VBox()
         self.add(self.mbox)
