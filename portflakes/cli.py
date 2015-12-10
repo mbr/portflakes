@@ -151,4 +151,5 @@ def convert_hts(htsfile):
 
         items.append((name, decode_8bit(bytes(val))))
 
+    # FIXME: ini format probably better, can save one per device
     click.echo(json.dumps(items, indent=2))

@@ -14,16 +14,24 @@ class TermGUI(Gtk.Window):
         super(TermGUI, self).__init__(*args, **kwargs)
 
         self.set_name('portflakes')
+        self.flake_model = Gtk.ListStore(str, str)
+
+        self.flake_model.append(['hello', 'world'])
+        self.flake_model.append(['hello2', 'wor2ld'])
 
         # build gui
-        self.mbox = Gtk.VBox()
-        self.add(self.mbox)
-
+        ibox = Gtk.VBox()
         top = MultiFormatViewer()
         bottom = DataEntry()
 
-        self.mbox.pack_start(top, True, True, 0)
-        self.mbox.pack_start(bottom, False, True, 0)
+        ibox.pack_start(top, True, True, 0)
+        ibox.pack_start(bottom, False, True, 0)
+
+        ftree = FlakeTree(self.flake_model)
+        ftree.set_size_request(150, 0)
+        mbox = Gtk.Box()
+        mbox.pack_start(ibox, True, True, 0)
+        mbox.pack_start(ftree, False, True, 0)
 
         self.connect('delete-event', Gtk.main_quit)
 
@@ -31,8 +39,55 @@ class TermGUI(Gtk.Window):
         if io:
             io.connect('data-received', lambda _, d: top.append(d, 'in'))
             io.connect('data-sent', lambda _, d: top.append(d, 'out'))
+            ftree.connect('send-sequence', lambda _, d: io.send_data(d))
 
             bottom.connect('data-entered', lambda _, d: io.send_data(d))
+
+        self.add(mbox)
+
+
+class FlakeTree(Gtk.VBox):
+    __gsignals__ = {'send-sequence': (GObject.SIGNAL_RUN_FIRST, None,
+                                      (object, )), }
+
+    def __init__(self, model, *args, **kwargs):
+        super(FlakeTree, self).__init__(*args, **kwargs)
+
+        self.view = Gtk.TreeView(model)
+        self.view.set_model(model)
+
+        col_name = Gtk.TreeViewColumn('Command')
+        col_sequence = Gtk.TreeViewColumn('Sequence')
+
+        r_name = Gtk.CellRendererText()
+        r_sequence = Gtk.CellRendererText()
+
+        col_name.pack_start(r_name, True)
+        col_name.add_attribute(r_name, 'text', 0)
+
+        col_sequence.pack_start(r_sequence, True)
+        col_sequence.add_attribute(r_sequence, 'text', 1)
+
+        self.view.append_column(col_name)
+        self.view.append_column(col_sequence)
+
+        self.pack_start(self.view, True, True, 0)
+
+        send_button = Gtk.Button('Send sequence')
+        send_button.connect('clicked', self._on_send_button_clicked)
+
+        self.pack_start(send_button, False, True, 0)
+
+    def _on_send_button_clicked(self, _):
+        sel = self.view.get_selection()
+
+        if sel:
+            seq = sel.get_selected_rows()[0][0][1]
+            self.emit('send-sequence', parse_8bit(seq))
+
+
+class CellRendererButton(Gtk.CellRenderer):
+    pass
 
 
 class EightBitEntry(Gtk.Entry):
