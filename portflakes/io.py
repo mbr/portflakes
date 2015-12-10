@@ -74,5 +74,20 @@ class Echo(BackgroundIO):
 class SerialIO(BackgroundIO):
     def __init__(self, ser, *args, **kwargs):
         super(SerialIO, self).__init__(*args, **kwargs)
-
         self.ser = ser
+
+    def _run_send_thread(self):
+        while True:
+            data = self._send_queue.get()
+
+            idx = 0
+            while idx != len(data):
+                bytes_sent = self.ser.write(data[idx:])
+                idx += bytes_sent
+                GLib.idle_add(self.emit, 'data-sent', data)
+
+    def _run_receive_thread(self):
+        while True:
+            data = self.ser.read()
+            print('READ', data)
+            GLib.idle_add(self.emit, 'data-received', data)
