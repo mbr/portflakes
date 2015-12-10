@@ -1,12 +1,15 @@
 import sys
 from itertools import product
+import json
+import re
 import time
+from xml.etree import ElementTree as ET
 
 import click
 import serial
 from .io import Echo, RandomDataGenerator, SerialIO
 from .gui import run_gui
-from .util import parse_8bit
+from .util import parse_8bit, decode_8bit
 
 PARITIES = ['none', 'even', 'odd', 'mark', 'space']
 
@@ -124,3 +127,28 @@ def find_settings(dev, send, expect, timeout, delay):
     time.sleep(delay)
 
     click.echo('Settings:\n{}'.format(sargs))
+
+
+@cli.command('convert-hts')
+@click.argument('htsfile', type=click.File())
+def convert_hts(htsfile):
+    BYTE_REGEX = re.compile(r'h\[([A-Za-z0-9]{2})\]$')
+
+    root = ET.parse(htsfile).getroot()
+    items = []
+
+    for item in root.iter('SequenceItem'):
+        name = item.attrib['name']
+
+        seq = item.find('sequence').attrib['value'].split(' ')
+        val = []
+        for byte in seq:
+            m = BYTE_REGEX.match(byte)
+            if not m:
+                raise ValueError('Cannot parse {!r}'.format(byte))
+
+            val.append(int(m.group(1), 16))
+
+        items.append((name, decode_8bit(bytes(val))))
+
+    click.echo(json.dumps(items, indent=2))
