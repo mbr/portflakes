@@ -1,4 +1,6 @@
-from gi.repository import Gtk, Pango
+from gi.repository import Gtk, Pango, GObject
+
+from .util import parse_8bit
 
 
 class TermGUI(Gtk.Window):
@@ -12,7 +14,7 @@ class TermGUI(Gtk.Window):
         self.add(self.mbox)
 
         top = MultiFormatViewer()
-        bottom = Gtk.Button(label="bottom")
+        bottom = DataEntry()
 
         self.mbox.pack_start(top, True, True, 0)
         self.mbox.pack_start(bottom, False, True, 0)
@@ -23,6 +25,43 @@ class TermGUI(Gtk.Window):
         if io:
             io.connect('data-received', lambda _, d: top.append(d, 'in'))
             io.connect('data-sent', lambda _, d: top.append(d, 'out'))
+
+
+class EightBitEntry(Gtk.Entry):
+    __gsignals__ = {'bytes-entered': (GObject.SIGNAL_RUN_FIRST, None,
+                                      (object, )), }
+
+    def __init__(self, *args, **kwargs):
+        super(EightBitEntry, self).__init__(*args, **kwargs)
+
+        self.connect('activate', self._on_activate)
+
+    def _on_activate(self, *args):
+        try:
+            raw = parse_8bit(self.get_text())
+        except UnicodeEncodeError as e:
+            char = e.args[1]
+
+            dlg = Gtk.MessageDialog(
+                self.get_toplevel(), Gtk.DialogFlags.MODAL,
+                Gtk.MessageType.ERROR, Gtk.ButtonsType.OK,
+                'Cannot encode {}. Escape non-ascii characters using \\x'
+                .format(char))
+            dlg.run()
+            dlg.destroy()
+            return
+
+        # we got valid, sendable raw input! hooray
+        self.emit('bytes-entered', raw)
+        self.set_text('')
+
+
+class DataEntry(Gtk.Notebook):
+    def __init__(self, *args, **kwargs):
+        super(DataEntry, self).__init__(*args, **kwargs)
+
+        entry = EightBitEntry()
+        self.append_page(entry, Gtk.Label('Direct entry'))
 
 
 class DataView(Gtk.TextView):

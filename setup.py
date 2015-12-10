@@ -20,7 +20,7 @@ setup(name='portflakes',
       url='https://github.com/mbr/portflakes',
       license='MIT',
       packages=find_packages(exclude=['tests']),
-      install_requires=['click'],
+      install_requires=['click', 'pyserial'],
       entry_points={
           'console_scripts': [
               'portflakes = portflakes.cli:cli',
