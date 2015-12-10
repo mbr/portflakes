@@ -35,6 +35,20 @@ class DataView(Gtk.TextView):
         self._style()
 
     def _style(self):
+        ctx = self.get_style_context()
+        ctx.add_class('data_view')
+
+        style_provider = Gtk.CssProvider()
+        css = b"""
+        GtkTextView.data_view {
+            background-color: #111;
+            color: #eee;
+        }
+        """
+
+        style_provider.load_from_data(css)
+        ctx.add_provider(style_provider,
+                         Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
         self.modify_font(Pango.FontDescription('Monospace'))
         self.set_wrap_mode(Gtk.WrapMode.CHAR)
 
