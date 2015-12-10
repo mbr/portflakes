@@ -2,25 +2,24 @@ from gi.repository import Gtk, Pango
 
 
 class TermGUI(Gtk.Window):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, io=None, *args, **kwargs):
         super(TermGUI, self).__init__(*args, **kwargs)
-
-        # storage for input data
-        self.buffer = bytearray("Hel<b>l</b>\r\no, world\n\x12".encode(
-            'ascii'))
 
         # build gui
         self.mbox = Gtk.VBox()
         self.add(self.mbox)
 
         top = MultiFormatViewer()
-        top.set_data(self.buffer)
         bottom = Gtk.Button(label="bottom")
 
         self.mbox.pack_start(top, True, True, 0)
         self.mbox.pack_start(bottom, False, True, 0)
 
         self.connect("delete-event", Gtk.main_quit)
+
+        # connect to io
+        if io:
+            io.connect('data-received', lambda _, d: top.append_data(d))
 
 
 class DataView(Gtk.TextView):
@@ -35,13 +34,9 @@ class DataView(Gtk.TextView):
     def _style(self):
         self.modify_font(Pango.FontDescription('Monospace'))
 
-    def set_data(self, data):
-        self._data = data
-        self._update()
-
-    def _update(self):
-        s = repr(self._data)
-        self.get_buffer().set_text(s)
+    def append_data(self, data):
+        tb = self.get_buffer()
+        tb.insert(tb.get_end_iter(), repr(data))
 
 
 class ASCIIView(DataView):
@@ -59,15 +54,11 @@ class ASCIIView(DataView):
             0x0d: (r'\r', self.tag_nl),
         }
 
-    def _update(self):
+    def append_data(self, data):
         tb = self.get_buffer()
+        pos = tb.get_end_iter()
 
-        # empty
-        tb.delete(tb.get_start_iter(), tb.get_end_iter())
-
-        pos = tb.get_start_iter()
-
-        for c in self._data:
+        for c in data:
             # printable range
             if 32 <= c < 127:
                 tb.insert(pos, chr(c))
@@ -83,15 +74,11 @@ class ASCIIView(DataView):
 
 
 class HexView(DataView):
-    def _update(self):
+    def append_data(self, data):
         tb = self.get_buffer()
+        pos = tb.get_end_iter()
 
-        # empty
-        tb.delete(tb.get_start_iter(), tb.get_end_iter())
-
-        pos = tb.get_start_iter()
-
-        for c in self._data:
+        for c in data:
             tb.insert(pos, '{:02x} '.format(c))
 
 
@@ -105,6 +92,6 @@ class MultiFormatViewer(Gtk.Notebook):
         self.append_page(self.view_ascii, Gtk.Label('ASCII'))
         self.append_page(self.view_hex, Gtk.Label('Hex'))
 
-    def set_data(self, data):
-        self.view_ascii.set_data(data)
-        self.view_hex.set_data(data)
+    def append_data(self, data):
+        self.view_ascii.append_data(data)
+        self.view_hex.append_data(data)

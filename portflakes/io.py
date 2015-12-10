@@ -21,6 +21,6 @@ class BackgroundIO(GObject.GObject):
 class RandomDataGenerator(BackgroundIO):
     def _run_thread(self):
         while True:
-            time.sleep(1)
             data = os.urandom(2)
             GLib.idle_add(self.emit, 'data-received', data)
+            time.sleep(1)

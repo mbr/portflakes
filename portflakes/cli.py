@@ -1,5 +1,5 @@
 import click
-from gi.repository import Gtk, GLib
+from gi.repository import Gtk
 
 from .io import RandomDataGenerator
 from .gui import TermGUI
@@ -7,10 +7,9 @@ from .gui import TermGUI
 
 @click.command('portflakes')
 def cli():
-    mw = TermGUI()
-    gen = RandomDataGenerator()
-    gen.start_thread()
-    gen.connect('data-received', lambda s, d: print('-> {!r} {!r}'.format
-        (s, d)))
+    io_thread = RandomDataGenerator()
+    mw = TermGUI(io=io_thread)
+
+    io_thread.start_thread()
     mw.show_all()
     Gtk.main()
