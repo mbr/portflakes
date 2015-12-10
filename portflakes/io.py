@@ -32,8 +32,8 @@ class BackgroundIO(GObject.GObject):
 class RandomDataGenerator(BackgroundIO):
     def _run_send_thread(self):
         while True:
-            data = b'ABC'
-            GLib.idle_add(self.emit, 'data-received', data)
+            data = b'ABC\n\x12'
+            GLib.idle_add(self.emit, 'data-sent', data)
             time.sleep(1)
 
     def _run_receive_thread(self):

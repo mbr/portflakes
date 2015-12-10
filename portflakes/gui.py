@@ -21,8 +21,8 @@ class TermGUI(Gtk.Window):
 
         # connect to io
         if io:
-            io.connect('data-received', lambda _, d: top.append_incoming(d))
-            io.connect('data-sent', lambda _, d: top.append_outgoing(d))
+            io.connect('data-received', lambda _, d: top.append(d, 'in'))
+            io.connect('data-sent', lambda _, d: top.append(d, 'out'))
 
 
 class DataView(Gtk.TextView):
@@ -34,6 +34,10 @@ class DataView(Gtk.TextView):
 
         self._style()
 
+        tb = self.get_buffer()
+        self.tag_incoming = tb.create_tag('incoming', foreground='#aa3')
+        self.tag_outgoing = tb.create_tag('outgoing', foreground='#88f')
+
     def _style(self):
         ctx = self.get_style_context()
         ctx.add_class('data_view')
@@ -41,7 +45,7 @@ class DataView(Gtk.TextView):
         style_provider = Gtk.CssProvider()
         css = b"""
         GtkTextView.data_view {
-            background-color: #111;
+            background-color: #222;
             color: #eee;
         }
         """
@@ -52,13 +56,10 @@ class DataView(Gtk.TextView):
         self.modify_font(Pango.FontDescription('Monospace'))
         self.set_wrap_mode(Gtk.WrapMode.CHAR)
 
-    def append_incoming(self, data):
+    def append(self, data, direction):
         tb = self.get_buffer()
-        tb.insert(tb.get_end_iter(), repr(data))
-
-    def append_outgoing(self, data):
-        tb = self.get_buffer()
-        tb.insert(tb.get_end_iter(), repr(data))
+        tb.insert_with_tags(tb.get_end_iter(), repr(data), self.tag_incoming if
+                            direction == 'in' else self.tag_outgoing)
 
 
 class ASCIIView(DataView):
@@ -67,8 +68,8 @@ class ASCIIView(DataView):
 
         # create tags
         tb = self.get_buffer()
-        self.tag_non_ascii = tb.create_tag('non_ascii', foreground='#cc0000')
-        self.tag_nl = tb.create_tag('nl', foreground='#777')
+        self.tag_non_ascii = tb.create_tag('non_ascii', background='#333')
+        self.tag_nl = tb.create_tag('nl', background='#000')
 
         self.map = {
             0x09: (r'\t', self.tag_non_ascii),
@@ -76,36 +77,47 @@ class ASCIIView(DataView):
             0x0d: (r'\r', self.tag_nl),
         }
 
-    def append_incoming(self, data):
+    def append(self, data, direction):
         tb = self.get_buffer()
         pos = tb.get_end_iter()
 
         for c in data:
+            tags = [self.tag_incoming if direction == 'in' else
+                    self.tag_outgoing]
+
             # printable range
             if 32 <= c < 127:
-                tb.insert(pos, chr(c))
-                continue
+                buf = chr(c)
+            elif c in self.map:
+                fmt = self.map[c]
+                buf = fmt[0]
+                tags.extend(fmt[1:])
+            else:
+                buf = r'\x{:x}'.format(c)
+                tags.append(self.tag_non_ascii)
 
-            fmt = self.map.get(c, None)
-
-            if fmt:
-                tb.insert_with_tags(pos, *fmt)
-                continue
-
-            tb.insert_with_tags(pos, r'\x{:x}'.format(c), self.tag_non_ascii)
+            tb.insert_with_tags(pos, buf, *tags)
 
 
 class HexView(DataView):
+    def __init__(self, *args, **kwargs):
+        super(HexView, self).__init__(*args, **kwargs)
+
+        tb = self.get_buffer()
+        self.tag_incoming = tb.create_tag('incoming_bg', background='#660')
+        self.tag_outgoing = tb.create_tag('outgoing_bg', background='#338')
+
     def _style(self):
         super(HexView, self)._style()
         self.set_wrap_mode(Gtk.WrapMode.WORD)
 
-    def append_incoming(self, data):
+    def append(self, data, direction):
         tb = self.get_buffer()
         pos = tb.get_end_iter()
 
         for c in data:
-            tb.insert(pos, '{:02x} '.format(c))
+            tb.insert_with_tags(pos, '{:02x} '.format(c), self.tag_incoming if
+                                direction == 'in' else self.tag_outgoing)
 
 
 class MultiFormatViewer(Gtk.Notebook):
@@ -118,6 +130,6 @@ class MultiFormatViewer(Gtk.Notebook):
         self.append_page(self.view_ascii, Gtk.Label('ASCII'))
         self.append_page(self.view_hex, Gtk.Label('Hex'))
 
-    def append_incoming(self, data):
-        self.view_ascii.append_incoming(data)
-        self.view_hex.append_incoming(data)
+    def append(self, data, direction):
+        self.view_ascii.append(data, direction)
+        self.view_hex.append(data, direction)
