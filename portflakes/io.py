@@ -69,3 +69,10 @@ class Echo(BackgroundIO):
 
     def _run_receive_thread(self):
         pass
+
+
+class SerialIO(BackgroundIO):
+    def __init__(self, ser, *args, **kwargs):
+        super(SerialIO, self).__init__(*args, **kwargs)
+
+        self.ser = ser
