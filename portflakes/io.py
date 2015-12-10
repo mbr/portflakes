@@ -1,6 +1,7 @@
 import os
 import time
 import threading
+from queue import Queue
 
 from gi.repository import GObject, GLib
 
@@ -10,6 +11,10 @@ class BackgroundIO(GObject.GObject):
                                       (object, )),
                     'data-sent': (GObject.SIGNAL_RUN_FIRST, None,
                                   (object, )), }
+
+    def __init__(self, *args, **kwargs):
+        super(BackgroundIO, self).__init__(*args, **kwargs)
+        self._send_queue = Queue()
 
     def start_daemon(self):
         self._receive_thread = threading.Thread(
@@ -21,6 +26,9 @@ class BackgroundIO(GObject.GObject):
 
         self._receive_thread.start()
         self._send_thread.start()
+
+    def send_data(self, data):
+        self._send_queue.put(data)
 
     def _run_receive_thread(self):
         raise NotImplementedError()
@@ -41,3 +49,17 @@ class RandomDataGenerator(BackgroundIO):
             data = os.urandom(2)
             GLib.idle_add(self.emit, 'data-received', data)
             time.sleep(1)
+
+
+class Echo(BackgroundIO):
+    def _run_send_thread(self):
+        while True:
+            data = self._send_queue.get()
+
+            GLib.idle_add(self.emit, 'data-sent', data)
+
+            # receive right away
+            GLib.idle_add(self.emit, 'data-received', data)
+
+    def _run_receive_thread(self):
+        pass

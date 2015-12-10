@@ -19,12 +19,14 @@ class TermGUI(Gtk.Window):
         self.mbox.pack_start(top, True, True, 0)
         self.mbox.pack_start(bottom, False, True, 0)
 
-        self.connect("delete-event", Gtk.main_quit)
+        self.connect('delete-event', Gtk.main_quit)
 
         # connect to io
         if io:
             io.connect('data-received', lambda _, d: top.append(d, 'in'))
             io.connect('data-sent', lambda _, d: top.append(d, 'out'))
+
+            bottom.connect('data-entered', lambda _, d: io.send_data(d))
 
 
 class EightBitEntry(Gtk.Entry):
@@ -64,11 +66,18 @@ class EightBitEntry(Gtk.Entry):
 
 
 class DataEntry(Gtk.Notebook):
+    __gsignals__ = {'data-entered': (GObject.SIGNAL_RUN_FIRST, None,
+                                     (object, )), }
+
     def __init__(self, *args, **kwargs):
+
         super(DataEntry, self).__init__(*args, **kwargs)
 
         entry = EightBitEntry()
         self.append_page(entry, Gtk.Label('Direct entry'))
+
+        entry.connect('bytes-entered',
+                      lambda _, d: self.emit('data-entered', d))
 
 
 class DataView(Gtk.TextView):
