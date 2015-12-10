@@ -3,9 +3,14 @@ from gi.repository import Gtk, Pango, GObject
 from .util import parse_8bit
 
 
-def run_gui(io):
+def run_gui(io, seqs=[]):
     mw = TermGUI(io=io)
+
+    for seq in seqs:
+        mw.load_sequences(seq)
+
     mw.show_all()
+
     Gtk.main()
 
 
@@ -14,10 +19,7 @@ class TermGUI(Gtk.Window):
         super(TermGUI, self).__init__(*args, **kwargs)
 
         self.set_name('portflakes')
-        self.flake_model = Gtk.ListStore(str, str)
-
-        self.flake_model.append(['hello', 'world'])
-        self.flake_model.append(['hello2', 'wor2ld'])
+        self.sequence_model = Gtk.ListStore(str, str)
 
         # build gui
         ibox = Gtk.VBox()
@@ -27,7 +29,7 @@ class TermGUI(Gtk.Window):
         ibox.pack_start(top, True, True, 0)
         ibox.pack_start(bottom, False, True, 0)
 
-        ftree = FlakeTree(self.flake_model)
+        ftree = SequenceTree(self.sequence_model)
         ftree.set_size_request(150, 0)
         mbox = Gtk.Box()
         mbox.pack_start(ibox, True, True, 0)
@@ -45,13 +47,17 @@ class TermGUI(Gtk.Window):
 
         self.add(mbox)
 
+    def load_sequences(self, seqs):
+        for row in seqs:
+            self.sequence_model.append(row)
 
-class FlakeTree(Gtk.VBox):
+
+class SequenceTree(Gtk.VBox):
     __gsignals__ = {'send-sequence': (GObject.SIGNAL_RUN_FIRST, None,
                                       (object, )), }
 
     def __init__(self, model, *args, **kwargs):
-        super(FlakeTree, self).__init__(*args, **kwargs)
+        super(SequenceTree, self).__init__(*args, **kwargs)
 
         self.view = Gtk.TreeView(model)
         self.view.set_model(model)

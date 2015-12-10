@@ -38,8 +38,9 @@ def random():
 @click.option('--xonxoff', is_flag=True, default=False)
 @click.option('--rts', is_flag=True, default=False)
 @click.option('--dsr', is_flag=True, default=False)
+@click.option('--seq', '-S', multiple=True, type=click.File())
 def open_serial_device(dev, baudrate, bytesize, parity, stopbits, rts, dsr,
-                       xonxoff):
+                       xonxoff, seq):
     sargs = {'port': dev}
 
     if baudrate is not None:
@@ -66,7 +67,9 @@ def open_serial_device(dev, baudrate, bytesize, parity, stopbits, rts, dsr,
     assert ser.isOpen()
     click.echo(ser)
 
-    run_gui(SerialIO.new_and_start(ser))
+    seqs = [json.load(s) for s in seq]
+
+    run_gui(SerialIO.new_and_start(ser), seqs)
 
 
 @cli.command('try')
