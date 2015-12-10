@@ -254,9 +254,11 @@ class ASCIIView(DataView):
 
         self.map = {
             0x09: (r'\t', self.tag_non_ascii),
-            0x0a: ('\\n\n', self.tag_nl),
+            0x0a: (r'\n', self.tag_nl),
             0x0d: (r'\r', self.tag_nl),
         }
+
+        self.break_next = False
 
     def append(self, data, direction):
         tb = self.get_buffer()
@@ -276,6 +278,13 @@ class ASCIIView(DataView):
             else:
                 buf = r'\x{:x}'.format(c)
                 tags.append(self.tag_non_ascii)
+
+            # add line feed on carriage return
+            if c in (0x0d, 0xa):
+                self.break_next = True
+            elif self.break_next:
+                buf = '\n' + buf
+                self.break_next = False
 
             tb.insert_with_tags(pos, buf, *tags)
 
