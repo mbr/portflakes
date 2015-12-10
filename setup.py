@@ -11,19 +11,19 @@ def read(fname):
     return buf.decode('utf8')
 
 
-setup(name='hts-miniterm',
+setup(name='portflakes',
       version='0.1.dev1',
-      description='miniterm.py + .hts file parsing',
+      description='Explores serial devices',
       long_description=read('README.rst'),
       author='Marc Brinkmann',
       author_email='git@marcbrinkmann.de',
-      url='https://github.com/mbr/hts-miniterm',
+      url='https://github.com/mbr/portflakes',
       license='MIT',
       packages=find_packages(exclude=['tests']),
       install_requires=['click'],
       entry_points={
           'console_scripts': [
-              'hts-miniterm = hts_miniterm.cli:cli',
+              'portflakes = portflakes.cli:cli',
           ],
       },
       classifiers=[

@@ -4,7 +4,7 @@ from gi.repository import Gtk
 from .gui import TermGUI
 
 
-@click.command('hts-miniterm')
+@click.command('portflakes')
 def cli():
     mw = TermGUI()
     mw.show_all()
