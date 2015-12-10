@@ -1,4 +1,4 @@
-from gi.repository import Gtk, Pango, GObject
+from gi.repository import Gtk, Pango, GObject, Gio
 
 from .util import parse_8bit
 
@@ -9,7 +9,7 @@ def run_gui(io, seqs=[]):
     for seq in seqs:
         mw.load_sequences(seq)
 
-    mw.show_all()
+    mw.show()
 
     Gtk.main()
 
@@ -22,30 +22,59 @@ class TermGUI(Gtk.Window):
         self.sequence_model = Gtk.ListStore(str, str)
 
         # build gui
+        root = Gtk.VBox()
+        self.add(root)
+
+        # header
+        header = Gtk.HeaderBar()
+        header.set_show_close_button(True)
+        header.props.title = 'portflakes: {}'.format(io.name)
+
+        seq_button = Gtk.Button()
+        seq_icon = Gio.ThemedIcon(name="folder")
+        seq_image = Gtk.Image.new_from_gicon(seq_icon, Gtk.IconSize.BUTTON)
+        seq_button.add(seq_image)
+        header.pack_end(seq_button)
+
+        root.pack_start(header, False, True, 0)
+
+        # ibox: displays input/output and entry
         ibox = Gtk.VBox()
-        top = MultiFormatViewer()
-        bottom = DataEntry()
 
-        ibox.pack_start(top, True, True, 0)
-        ibox.pack_start(bottom, False, True, 0)
+        viewer = MultiFormatViewer()
+        entry = DataEntry()
 
+        ibox.pack_start(viewer, True, True, 0)
+        ibox.pack_start(entry, False, True, 0)
+
+        # sequence tree
         ftree = SequenceTree(self.sequence_model)
         ftree.set_size_request(150, 0)
+        ftree_scroll = Gtk.ScrolledWindow()
+        ftree_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        ftree_scroll.add(ftree)
+        seq_button.connect(
+            'clicked',
+            lambda _: ftree_scroll.set_visible(not ftree_scroll.get_visible()))
+
+        # center box
         mbox = Gtk.Box()
         mbox.pack_start(ibox, True, True, 0)
-        mbox.pack_start(ftree, False, True, 0)
+        mbox.pack_start(ftree_scroll, False, True, 0)
+        root.pack_start(mbox, True, True, 0)
 
         self.connect('delete-event', Gtk.main_quit)
 
         # connect to io
         if io:
-            io.connect('data-received', lambda _, d: top.append(d, 'in'))
-            io.connect('data-sent', lambda _, d: top.append(d, 'out'))
+            io.connect('data-received', lambda _, d: viewer.append(d, 'in'))
+            io.connect('data-sent', lambda _, d: viewer.append(d, 'out'))
             ftree.connect('send-sequence', lambda _, d: io.send_data(d))
 
-            bottom.connect('data-entered', lambda _, d: io.send_data(d))
+            entry.connect('data-entered', lambda _, d: io.send_data(d))
 
-        self.add(mbox)
+        self.show_all()
+        ftree_scroll.hide()
 
     def load_sequences(self, seqs):
         for row in seqs:

@@ -16,6 +16,10 @@ class BackgroundIO(GObject.GObject):
         super(BackgroundIO, self).__init__(*args, **kwargs)
         self._send_queue = Queue()
 
+    @property
+    def name(self):
+        return self.__class__.__name__
+
     def start_daemon(self):
         self._receive_thread = threading.Thread(
             target=self._run_receive_thread)
