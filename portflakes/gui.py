@@ -36,6 +36,7 @@ class DataView(Gtk.TextView):
 
     def _style(self):
         self.modify_font(Pango.FontDescription('Monospace'))
+        self.set_wrap_mode(Gtk.WrapMode.CHAR)
 
     def append_incoming(self, data):
         tb = self.get_buffer()
@@ -81,6 +82,10 @@ class ASCIIView(DataView):
 
 
 class HexView(DataView):
+    def _style(self):
+        super(HexView, self)._style()
+        self.set_wrap_mode(Gtk.WrapMode.WORD)
+
     def append_incoming(self, data):
         tb = self.get_buffer()
         pos = tb.get_end_iter()
