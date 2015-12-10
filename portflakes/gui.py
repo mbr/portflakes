@@ -49,18 +49,13 @@ class TermGUI(Gtk.Window):
 
         # sequence tree
         ftree = SequenceTree(self.sequence_model)
-        ftree.set_size_request(150, 0)
-        ftree_scroll = Gtk.ScrolledWindow()
-        ftree_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        ftree_scroll.add(ftree)
         seq_button.connect(
-            'clicked',
-            lambda _: ftree_scroll.set_visible(not ftree_scroll.get_visible()))
+            'clicked', lambda _: ftree.set_visible(not ftree.get_visible()))
 
         # center box
         mbox = Gtk.Box()
         mbox.pack_start(ibox, True, True, 0)
-        mbox.pack_start(ftree_scroll, False, True, 0)
+        mbox.pack_start(ftree, False, True, 0)
         root.pack_start(mbox, True, True, 0)
 
         self.connect('delete-event', Gtk.main_quit)
@@ -74,7 +69,7 @@ class TermGUI(Gtk.Window):
             entry.connect('data-entered', lambda _, d: io.send_data(d))
 
         self.show_all()
-        ftree_scroll.hide()
+        ftree.hide()
 
     def load_sequences(self, seqs):
         for row in seqs:
@@ -90,6 +85,7 @@ class SequenceTree(Gtk.VBox):
 
         self.view = Gtk.TreeView(model)
         self.view.set_model(model)
+        self.set_size_request(150, 0)
 
         col_name = Gtk.TreeViewColumn('Command')
         col_sequence = Gtk.TreeViewColumn('Sequence')
@@ -106,7 +102,11 @@ class SequenceTree(Gtk.VBox):
         self.view.append_column(col_name)
         self.view.append_column(col_sequence)
 
-        self.pack_start(self.view, True, True, 0)
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scroll.add(self.view)
+
+        self.pack_start(scroll, True, True, 0)
 
         send_button = Gtk.Button('Send sequence')
         send_button.connect('clicked', self._on_send_button_clicked)

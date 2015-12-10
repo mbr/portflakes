@@ -80,6 +80,10 @@ class SerialIO(BackgroundIO):
         super(SerialIO, self).__init__(*args, **kwargs)
         self.ser = ser
 
+    @property
+    def name(self):
+        return self.ser.port
+
     def _run_send_thread(self):
         while True:
             data = self._send_queue.get()
