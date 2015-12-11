@@ -317,8 +317,17 @@ class MultiFormatViewer(Gtk.Notebook):
         self.view_ascii = ASCIIView()
         self.view_hex = HexView()
 
-        self.append_page(self.view_ascii, Gtk.Label('ASCII'))
-        self.append_page(self.view_hex, Gtk.Label('Hex'))
+        scroll_ascii = Gtk.ScrolledWindow()
+        scroll_hex = Gtk.ScrolledWindow()
+
+        scroll_ascii.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scroll_ascii.add(self.view_ascii)
+
+        scroll_hex.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scroll_hex.add(self.view_hex)
+
+        self.append_page(scroll_ascii, Gtk.Label('ASCII'))
+        self.append_page(scroll_hex, Gtk.Label('Hex'))
 
     def append(self, data, direction):
         self.view_ascii.append(data, direction)
