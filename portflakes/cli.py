@@ -25,8 +25,9 @@ def echo():
 
 
 @cli.command()
-def random():
-    run_gui(RandomDataGenerator.new_and_start())
+@click.option('--delay', '-d', type=float, default=0.5)
+def random(delay):
+    run_gui(RandomDataGenerator.new_and_start(delay))
 
 
 @cli.command('open')

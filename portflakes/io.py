@@ -48,17 +48,21 @@ class BackgroundIO(GObject.GObject):
 
 
 class RandomDataGenerator(BackgroundIO):
+    def __init__(self, delay, *args, **kwargs):
+        super(RandomDataGenerator, self).__init__(*args, **kwargs)
+        self.delay = delay
+
     def _run_send_thread(self):
         while True:
             data = b'ABC\n\x12'
             GLib.idle_add(self.emit, 'data-sent', data)
-            time.sleep(1)
+            time.sleep(self.delay)
 
     def _run_receive_thread(self):
         while True:
             data = os.urandom(2)
             GLib.idle_add(self.emit, 'data-received', data)
-            time.sleep(1)
+            time.sleep(self.delay)
 
 
 class Echo(BackgroundIO):
