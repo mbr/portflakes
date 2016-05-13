@@ -310,6 +310,21 @@ class HexView(DataView):
                                 direction == 'in' else self.tag_outgoing)
 
 
+class AutoScrolledWindow(Gtk.ScrolledWindow):
+    def add(self, child):
+        super(AutoScrolledWindow, self).add(child)
+        self.enable_auto_scroll = True
+        child.connect('size-allocate', self.on_child_size_allocate)
+
+    def on_child_size_allocate(self, child, *args):
+        # it would be nice to detect whether or not to auto-scroll based on
+        # the scroll position, but this seems quite buggy on the gtk end
+        # on my system atm = (
+        if self.enable_auto_scroll:
+            vadj = self.get_vadjustment()
+            vadj.set_value(vadj.get_upper() - vadj.get_page_size())
+
+
 class MultiFormatViewer(Gtk.Notebook):
     def __init__(self, *args, **kwargs):
         super(MultiFormatViewer, self).__init__(*args, **kwargs)
@@ -317,8 +332,8 @@ class MultiFormatViewer(Gtk.Notebook):
         self.view_ascii = ASCIIView()
         self.view_hex = HexView()
 
-        scroll_ascii = Gtk.ScrolledWindow()
-        scroll_hex = Gtk.ScrolledWindow()
+        scroll_ascii = AutoScrolledWindow()
+        scroll_hex = AutoScrolledWindow()
 
         scroll_ascii.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         scroll_ascii.add(self.view_ascii)
@@ -328,6 +343,9 @@ class MultiFormatViewer(Gtk.Notebook):
 
         self.append_page(scroll_ascii, Gtk.Label('ASCII'))
         self.append_page(scroll_hex, Gtk.Label('Hex'))
+
+        self.scroll_ascii = scroll_ascii
+        self.scroll_hex = scroll_hex
 
     def append(self, data, direction):
         self.view_ascii.append(data, direction)
