@@ -1,4 +1,4 @@
-from gi.repository import Gtk, Pango, GObject, Gio
+from gi.repository import Gtk, Pango, GObject, Gio, Gdk
 
 from .util import parse_8bit
 
@@ -133,10 +133,39 @@ class EightBitEntry(Gtk.Entry):
         super(EightBitEntry, self).__init__(*args, **kwargs)
 
         self.connect('activate', self._on_activate)
+        # FIXME: should probably limit size here?
+        self.history = []
+        self.history_pos = 0
+
+        self.connect('key-press-event', self._on_key_press)
+
+    def _on_key_press(self, widget, event):
+        if event.keyval == Gdk.KEY_Up:
+            # ignore if at start of history
+            if self.history_pos == 0:
+                self.stored = self.get_text()
+
+            if self.history_pos < len(self.history):
+                self.history_pos += 1
+                self._update_from_history()
+            return True
+
+        if event.keyval == Gdk.KEY_Down:
+            if self.history_pos > 1:
+                self.history_pos -= 1
+                self._update_from_history()
+            elif self.history_pos == 1:
+                self.history_pos = 0
+                self.set_text(self.stored)
+            return True
+
+    def _update_from_history(self):
+        self.set_text(self.history[len(self.history) - self.history_pos])
 
     def _on_activate(self, *args):
         try:
-            raw = parse_8bit(self.get_text())
+            tx = self.get_text()
+            raw = parse_8bit(tx)
         except UnicodeEncodeError as e:
             char = e.args[1]
 
@@ -157,6 +186,9 @@ class EightBitEntry(Gtk.Entry):
             return
 
         # we got valid, sendable raw input! hooray
+        if tx and (not self.history or self.history[-1] != tx):
+            self.history.append(tx)
+        self.history_pos = 0
         self.emit('bytes-entered', raw)
         self.set_text('')
 
@@ -196,7 +228,6 @@ class DataEntry(Gtk.Notebook):
                                      (object, )), }
 
     def __init__(self, *args, **kwargs):
-
         super(DataEntry, self).__init__(*args, **kwargs)
 
         eight_bit = EightBitInput()
