@@ -19,18 +19,18 @@ def cli():
     pass
 
 
-@cli.command()
+@cli.command(help='Open pseudo-device that echos back info')
 def echo():
     run_gui(Echo.new_and_start())
 
 
-@cli.command()
+@cli.command(help='Open pseudo-device producing random bytes')
 @click.option('--delay', '-d', type=float, default=0.5)
 def random(delay):
     run_gui(RandomDataGenerator.new_and_start(delay))
 
 
-@cli.command('open')
+@cli.command('open', help='Show GUI on given serial device')
 @click.argument('dev', type=click.Path(exists=True, dir_okay=False))
 @click.option('--baudrate', '-b', type=int)
 @click.option('--bytesize', '-B', type=int)
@@ -73,7 +73,7 @@ def open_serial_device(dev, baudrate, bytesize, parity, stopbits, rts, dsr,
     run_gui(SerialIO.new_and_start(ser), seqs)
 
 
-@cli.command('try')
+@cli.command('try', help='Try multiple configurations, waiting for data')
 @click.argument('dev', type=click.Path(exists=True, dir_okay=False))
 @click.option('--send', '-s', type=parse_8bit)
 @click.option('--expect', '-e', type=parse_8bit)
@@ -133,7 +133,7 @@ def find_settings(dev, send, expect, timeout, delay):
     click.echo('Settings:\n{}'.format(sargs))
 
 
-@cli.command('convert-hts')
+@cli.command('convert-hts', help='Read .hts file')
 @click.argument('htsfile', type=click.File())
 def convert_hts(htsfile):
     BYTE_REGEX = re.compile(r'h\[([A-Za-z0-9]{2})\]$')
