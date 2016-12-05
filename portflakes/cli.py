@@ -124,7 +124,8 @@ def find_settings(dev, send, expect, timeout, delay):
             click.echo('OK')
 
         if not expect:
-            click.echo('Waiting for any response from {}...'.format(dev),
+            click.echo('Waiting for any response from {} [{} baud]...'.format(
+                dev, baudrate),
                        nl=False)
             resp = ser.read()
 
