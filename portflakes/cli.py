@@ -58,7 +58,7 @@ def open_serial_device(dev, baudrate, bytesize, parity, stopbits, rts, dsr,
             '1': serial.STOPBITS_ONE,
             '1.5': serial.STOPBITS_ONE_POINT_FIVE,
             '2': serial.STOPBITS_TWO
-        }
+        }[stopbits]
 
     sargs['rtscts'] = rts
     sargs['dsrdtr'] = dsr
